@@ -36,10 +36,15 @@ test('a11yCheckCallback should log any violations and throw an error', function(
   let loggerStub = sandbox.stub(Ember.Logger, 'error');
 
   assert.throws(() => {
-    axe.ember.a11yCheckCallback({ violations: [ {}, {} ] });
+    axe.ember.a11yCheckCallback({
+      violations: [
+        { impact: 'critical' },
+        { impact: 'critical' }
+      ]
+    });
   }, 'The page should have no accessibility violations.');
 
-  assert.ok(loggerStub.calledTwice);
+  assert.ok(loggerStub.calledThrice);
 });
 
 /* axe.ember.afterRender */
