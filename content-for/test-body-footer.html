@@ -13,6 +13,15 @@
     _auditCount: 0,
 
     /**
+     * A simple wrapper around inserting a debugger.
+     * @private
+     * @return {Void}
+     */
+    _debugger: function() {
+      debugger;
+    },
+
+    /**
      * Processes the results of calling axe.a11yCheck. If there are any
      * violations, it throws an error and then logs them individually.
      * @param {Object} results
@@ -61,7 +70,7 @@
 
       // Check if we're on an audit that we plan to break on
       if (axe.ember._auditCount === axe.ember.breakOnAudit) {
-        debugger;
+        axe.ember._debugger();
       }
     },
 

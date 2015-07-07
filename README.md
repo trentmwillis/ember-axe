@@ -55,6 +55,20 @@ On the flip side, if you want to turn tests off, simply use:
 axe.ember.turnAxeOff();
 ```
 
+### Debugging
+
+Having a complicated Ember application can lead to difficult accessibility
+debugging. In order to make it a bit simpler, we give you the ability to pause
+acceptance tests on a specific iteration of the accessibility audit. Simply set
+the `breakOnAudit` property to the run number output in the console:
+
+```javascript
+axe.ember.breakOnAudit = 3;
+```
+
+This will cause the audit to trigger a `debugger` call on the third time the
+audit runs during a given module.
+
 ### Options
 
 You can pass specific options to be used during `a11yCheck` by setting them on a

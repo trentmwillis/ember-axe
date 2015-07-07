@@ -76,6 +76,25 @@ test('afterRender should run a11yCheck with options and feed the results to call
   axe.ember.testOptions = undefined;
 });
 
+/* axe.ember.breakOnAudit */
+
+test('breakOnAudit calls the debugger on a given audit run', function(assert) {
+  let a11yCheckStub = sandbox.stub(axe, 'a11yCheck');
+  let debuggerStub = sandbox.stub(axe.ember, '_debugger');
+
+  axe.ember._auditCount = 0;
+  axe.ember.breakOnAudit = 3;
+
+  axe.ember.afterRender();
+  assert.ok(debuggerStub.notCalled);
+
+  axe.ember.afterRender();
+  assert.ok(debuggerStub.notCalled);
+
+  axe.ember.afterRender();
+  assert.ok(debuggerStub.calledOnce);
+});
+
 /* axe.ember.moduleStart */
 
 test('moduleStart turns axe on for acceptance tests', function(assert) {
@@ -92,6 +111,15 @@ test('moduleStart turns axe off for non-acceptance tests', function(assert) {
   axe.ember.moduleStart({ name: 'Unit | Some Test' });
 
   assert.ok(turnAxeOffStub.calledOnce);
+});
+
+test('moduleState resets the breakOnAudit', function(assert) {
+  let turnAxeOffStub = sandbox.stub(axe.ember, 'turnAxeOff');
+
+  axe.ember.breakOnAudit = 10;
+  axe.ember.moduleStart({ name: 'Unit | Some Test' });
+
+  assert.ok(axe.ember.breakOnAudit === undefined);
 });
 
 /* axe.ember.qunitDone */
