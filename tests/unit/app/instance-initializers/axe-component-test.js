@@ -3,6 +3,7 @@ import Ember from 'ember';
 import AxeComponent from 'dummy/instance-initializers/axe-component';
 import A11yComponent from 'dummy/instance-initializers/a11y-component';
 import AutoRunComponent from 'dummy/instance-initializers/auto-run-component';
+import A11yError from 'ember-accessibility-automation/utils/a11y-error';
 import { module, test, skip } from 'qunit';
 
 let application;
@@ -18,6 +19,10 @@ module('Unit | Instance Initializer | axe-component', {
     });
 
     sandbox = sinon.sandbox.create();
+
+    AutoRunComponent.initialize(application);
+    A11yComponent.initialize(application);
+    AxeComponent.initialize(application);
   },
 
   afterEach() {
@@ -40,10 +45,6 @@ test('initializer should not re-open Ember.Component more than once', function(a
 });
 
 test('audit is registered as an automatedCallback on init', function(assert) {
-  AutoRunComponent.initialize(application);
-  A11yComponent.initialize(application);
-  AxeComponent.initialize(application);
-
   let component = Ember.Component.create({});
 
   assert.notEqual(component.get('automatedCallbacks').indexOf(component.audit), -1);
@@ -53,41 +54,39 @@ test('audit is registered as an automatedCallback on init', function(assert) {
 
 /* Ember.Component.audit */
 
-test('audit should log any violations found', function(assert) {
+test('audit should "throw" any violations found and mark those DOM nodes', function(assert) {
+  assert.expect(2);
+
+  let throwStub = sandbox.stub(A11yError, 'throw');
   let a11yCheckStub = sandbox.stub(axe, 'a11yCheck', function(el, options, callback) {
     callback({
       violations: [{
         name: 'test',
-        nodes: []
+        nodes: [{ target: [ '#test' ] }]
       }]
     });
   });
 
-  let logSpy = sandbox.spy(Ember.Logger, 'error');
-
   let component = Ember.Component.create({});
+  let highlightStub = sandbox.stub(component, 'highlightIssue');
   component.audit();
 
-  assert.ok(logSpy.calledOnce);
-});
-
-skip('audit should mark the DOM nodes of any violations', function(assert) {
-
+  assert.ok(throwStub.calledOnce, 'only one violation is thrown');
+  assert.ok(highlightStub.calledOnce, 'issue is highlighted');
 });
 
 test('audit should do nothing if no violations found', function(assert) {
+  let throwStub = sandbox.stub(A11yError, 'throw');
   let a11yCheckStub = sandbox.stub(axe, 'a11yCheck', function(el, options, callback) {
     callback({
       violations: []
     });
   });
 
-  let logSpy = sandbox.spy(Ember.Logger, 'error');
-
   let component = Ember.Component.create({});
   component.audit();
 
-  assert.ok(logSpy.notCalled);
+  assert.ok(throwStub.notCalled, 'nothing is thrown');
 });
 
 /* Ember.Component.axeCallback */
@@ -105,8 +104,8 @@ test('axeCallback receives the results of the audit', function(assert) {
 
   component.audit();
 
-  assert.ok(axeCallbackSpy.calledOnce);
-  assert.ok(axeCallbackSpy.calledWith(results));
+  assert.ok(axeCallbackSpy.calledOnce, 'axeCallback is only called once');
+  assert.ok(axeCallbackSpy.calledWith(results), 'axeCallback is called with the results');
 });
 
 test('axeCallback throws an error if it is not a function', function(assert) {
@@ -116,21 +115,23 @@ test('axeCallback throws an error if it is not a function', function(assert) {
   });
 
   let component = Ember.Component.create({
-    axeCallback: 'axeCallbackSpy'
+    axeCallback: 'not a function'
   });
 
-  assert.throws(() => component.audit(), 'axeCallback should be a function.');
+  assert.throws(() => component.audit(), /axeCallback should be a function./);
 });
 
 /* Ember.Component.axeOptions */
 
 test('axeOptions are passed in as the second param to a11yCheck', function(assert) {
+  assert.expect(2);
+
   let a11yCheckStub = sandbox.stub(axe, 'a11yCheck');
 
   let axeOptions = { test: 'test' };
   let component = Ember.Component.create({ axeOptions });
   component.audit();
 
-  assert.ok(a11yCheckStub.calledOnce);
-  assert.ok(a11yCheckStub.calledWith(component.$(), axeOptions));
+  assert.ok(a11yCheckStub.calledOnce, 'a11yCheck is only called once');
+  assert.ok(a11yCheckStub.calledWith(component.$(), axeOptions), 'a11yCheck is called with proper options');
 });

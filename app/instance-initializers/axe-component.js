@@ -1,3 +1,5 @@
+import A11yError from 'ember-accessibility-automation/utils/a11y-error';
+
 /**
  * Variable to ensure that the initializer is only ran once. Though in this
  * particular case, running more than once shouldn't cause side-effects.
@@ -10,7 +12,7 @@ export function initialize(application) {
 
   Ember.Component.reopen({
     /**
-     * Runs an accessibility audit on any render of the component.
+     * Registers an accessibility audit to run on any render of the component.
      * @private
      * @return {Void}
      */
@@ -34,25 +36,27 @@ export function initialize(application) {
 
     /**
      * Runs the axe a11yCheck audit and logs any violations to the console. It
-     * then passes the results to axeCallback if one is defined.
+     * then passes the results to {@link axeCallback} if one is defined.
      * @public
      * @return {Void}
      */
     audit() {
       axe.a11yCheck(this.$(), this.axeOptions, (results) => {
+        // Violations is an array of all failed tests
         let violations = results.violations;
-
         for (let i = 0, l = violations.length; i < l; i++) {
           let violation = violations[i];
 
-          Ember.Logger.error(`Violation #${i+1}`, violation);
+          A11yError.throw(`Violation #${i+1}: ${violation.help}`, violation);
 
+          // Array of elements that violated the test
           let nodes = violation.nodes;
-
           for (let j = 0, k = nodes.length; j < k; j++) {
             let node = nodes[i];
 
-            this.highlightIssue(node.target.join(','));
+            // Highlights the targeted node that failed the test and displays
+            // a message as well as custom class to select issues of this type
+            this.highlightIssue(node.target.join(','), violation.help, `axe-issue_${violation.id}`);
           }
         }
 
