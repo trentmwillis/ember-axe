@@ -6,82 +6,57 @@
    */
   axe.ember = {
     /**
+     * Simply runs axe.a11yCheck and passes the results to {@link
+     * _a11yCheckCallback}. Available publicly in case you find the need for
+     * additional calls.
+     * @public
+     * @return {Void}
+     */
+    a11yCheck: function() {
+      axe.a11yCheck('#ember-testing-container', axe.ember.testOptions, axe.ember.a11yCheckLogger);
+    },
+
+    /**
      * Processes the results of calling axe.a11yCheck. If there are any
-     * violations, it throws an error and then logs them individually.
+     * violations, it logs them individually and then throws an error. It will
+     * also pass the results through to {@link axe.ember.a11yCheckCallback} if it
+     * is defined as a function.
+     * @public
      * @param {Object} results
      * @return {Void}
      */
-    a11yCheckCallback: function(results) {
+    a11yCheckLogger: function(results) {
       var violations = results.violations;
 
       for (var i = 0, l = violations.length; i < l; i++) {
         Ember.Logger.error('Violation #' + (i + 1), violations[i]);
       }
 
+      var callback = axe.ember.a11yCheckCallback;
+      if (callback) {
+        Ember.assert('a11yCheckCallback should be a function', typeof callback === 'function');
+        callback(results);
+      }
+
       Ember.assert('The page should have no accessibility violations.', !violations.length);
     },
 
     /**
-     * Used as a callback for afterRender. Simply runs axe.a11yCheck and passes
-     * the results to a11yCheckCallback.
-     * @return {Void}
+     * An optional callback to receive the results of the a11yCheck after the
+     * logger gets them on each run.
+     * @public
+     * @type {Function}
      */
-    afterRender: function() {
-      axe.a11yCheck('#ember-testing-container', axe.ember.testOptions, axe.ember.a11yCheckCallback);
-    },
+    a11yCheckCallback: undefined,
 
     /**
-     * Used as a callback at the beginning of each testing module. It checks
-     * if the test is an acceptance test (based on standard Ember-CLI naming
-     * conventions), and adjust the testing display accordingly.
-     * @param {Object} details
-     * @return {Void}
-     */
-    moduleStart: function(details) {
-      if (~details.name.indexOf('Acceptance')) {
-        axe.ember.turnAxeOn();
-      } else {
-        axe.ember.turnAxeOff();
-      }
-    },
-
-    /**
-     * Used as a callback at the end of testing. It ensures the testing display
-     * has been reset to it's original appearance.
-     * @return {Void}
-     */
-    qunitDone: function() {
-      axe.ember.turnAxeOff();
-    },
-
-    /**
-     * Enables the axe-core tests to run on afterRender and modifies the visual
-     * layout of the testing.
-     * @return {Void}
-     */
-    turnAxeOn: function() {
-      Ember.run.backburner.options.render = { after: axe.ember.afterRender };
-      document.body.classList.add('axe-enabled');
-    },
-
-    /**
-     * Disables the axe-core tests to run on afterRender and restores the
-     * original visual layout of the testing.
-     * @return {Void}
-     */
-    turnAxeOff: function() {
-      Ember.run.backburner.options.render = { after: undefined };
-      document.body.classList.remove('axe-enabled');
-    },
-
-    /**
-     * An object of options to pass into axe.a11yCheck.
+     * An object of options to pass into axe.a11yCheck when run.
+     * @public
      * @type {Object}
      */
     testOptions: undefined
   };
 
   // Register the functions to their appropriate places for testing
-  QUnit.moduleStart(axe.ember.moduleStart);
-  QUnit.done(axe.ember.qunitDone);
+  a11y.registerAudit(axe.ember.a11yCheck);
 </script>

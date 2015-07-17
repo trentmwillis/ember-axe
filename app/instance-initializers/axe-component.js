@@ -10,6 +10,15 @@ export function initialize(application) {
 
   Ember.Component.reopen({
     /**
+     * Runs an accessibility audit on any render of the component.
+     * @private
+     * @return {Void}
+     */
+    _registerAxeAudit: Ember.on('init', function() {
+      this.addCallback(this.audit);
+    }),
+
+    /**
      * An optional callback to process the results from the a11yCheck.
      * @public
      * @type {Function}
@@ -22,24 +31,6 @@ export function initialize(application) {
      * @type {Object}
      */
     axeOptions: undefined,
-
-    /**
-     * Turns off the accessibility audit during rendering.
-     * @public
-     * @type {Boolean}
-     */
-    turnAuditOff: false,
-
-    /**
-     * Runs an accessibility audit on any render of the component.
-     * @private
-     * @return {Void}
-     */
-    _runAudit: Ember.on('didRender', function() {
-      if (this.turnAuditOff || Ember.testing) { return; }
-
-      this.audit();
-    }),
 
     /**
      * Runs the axe a11yCheck audit and logs any violations to the console. It
@@ -61,7 +52,7 @@ export function initialize(application) {
           for (let j = 0, k = nodes.length; j < k; j++) {
             let node = nodes[i];
 
-            this.$(node.target.join(','))[0].classList.add('axe-violation');
+            this.highlightIssue(node.target.join(','));
           }
         }
 

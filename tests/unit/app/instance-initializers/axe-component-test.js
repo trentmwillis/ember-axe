@@ -1,6 +1,8 @@
 /* global sinon, axe */
 import Ember from 'ember';
-import { initialize } from 'dummy/instance-initializers/axe-component';
+import AxeComponent from 'dummy/instance-initializers/axe-component';
+import A11yComponent from 'dummy/instance-initializers/a11y-component';
+import AutoRunComponent from 'dummy/instance-initializers/auto-run-component';
 import { module, test, skip } from 'qunit';
 
 let application;
@@ -31,63 +33,22 @@ test('initializer should not re-open Ember.Component more than once', function(a
   let assertMethod = Ember.Component.prototype.audit ? 'notCalled' : 'calledOnce';
   let reopenSpy = sandbox.spy(Ember.Component, 'reopen');
 
-  initialize(application);
-  initialize(application);
+  AxeComponent.initialize(application);
+  AxeComponent.initialize(application);
 
   assert.ok(reopenSpy[assertMethod]);
 });
 
-test('audit is run on didRender when not in testing mode', function(assert) {
-  initialize(application);
+test('audit is registered as an automatedCallback on init', function(assert) {
+  AutoRunComponent.initialize(application);
+  A11yComponent.initialize(application);
+  AxeComponent.initialize(application);
 
   let component = Ember.Component.create({});
-  let auditSpy = sandbox.spy(component, 'audit');
 
-  // In order for the audit to run, we have to act like we're not in testing
-  Ember.testing = false;
-
-  Ember.run(() => component.appendTo('#ember-testing'));
-  assert.ok(auditSpy.calledOnce);
-
-  Ember.run(() => component.trigger('didRender'));
-  assert.ok(auditSpy.calledTwice);
+  assert.notEqual(component.get('automatedCallbacks').indexOf(component.audit), -1);
 
   Ember.run(() => component.destroy());
-
-  // Turn testing mode back on to ensure validity of other tests
-  Ember.testing = true;
-});
-
-test('audit is not run on didRender when in testing mode', function(assert) {
-  initialize(application);
-
-  let component = Ember.Component.create({});
-  let auditSpy = sandbox.spy(component, 'audit');
-
-  Ember.run(() => component.appendTo('#ember-testing'));
-  assert.ok(auditSpy.notCalled);
-
-  Ember.run(() => component.destroy());
-});
-
-/* Ember.Component.turnAuditOff */
-
-test('turnAuditOff prevents audit from running on didRender', function(assert) {
-  initialize(application);
-
-  let component = Ember.Component.create({ turnAuditOff: true });
-  let auditSpy = sandbox.spy(component, 'audit');
-
-  // In order for the audit to run, we have to act like we're not in testing
-  Ember.testing = false;
-
-  Ember.run(() => component.appendTo('#ember-testing'));
-  assert.ok(auditSpy.notCalled);
-
-  Ember.run(() => component.destroy());
-
-  // Turn testing mode back on to ensure validity of other tests
-  Ember.testing = true;
 });
 
 /* Ember.Component.audit */

@@ -8,8 +8,6 @@ var VersionChecker = require('ember-cli-version-checker');
 
 // The different types/area for which we have content for.
 var ALLOWED_CONTENT_FOR = [
-  'head-footer',
-  'test-head-footer',
   'test-body-footer'
 ];
 
@@ -63,7 +61,7 @@ module.exports = {
 
     if (isProductionBuild || isOldEmber) {
       tree = new Funnel(tree, {
-        exclude: [/instance-initializers\/axe-component.js/]
+        exclude: [ /instance-initializers/ ]
       });
     }
 
