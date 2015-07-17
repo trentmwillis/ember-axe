@@ -34,10 +34,21 @@ module.exports = {
    * contents of the files with the same name to the content-for block.
    * @override
    */
-  contentFor: function(type) {
+  contentFor: function(type, config) {
+    var content = this.addons.reduce(function(content, addon) {
+      var addonContent = addon.contentFor ? addon.contentFor(type, config) : null;
+      if (addonContent) {
+        return content.concat(addonContent);
+      }
+
+      return content;
+    }, '');
+
     if (~ALLOWED_CONTENT_FOR.indexOf(type)) {
-      return fs.readFileSync(path.join(__dirname, 'content-for', type + '.html'));
+      content += '\n' + fs.readFileSync(path.join(__dirname, 'content-for', type + '.html'));
     }
+
+    return content;
   },
 
   /**
