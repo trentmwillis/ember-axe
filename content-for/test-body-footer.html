@@ -37,11 +37,9 @@
      * @return {String}
      */
      nodesToString: function(nodes) {
-       var nodesString = nodes.map(function(node) {
+       return nodes.map(function(node) {
          return node.html;
-       });
-
-       return nodesString.join(', ');
+       }).join(', ');
      },
 
     /**
